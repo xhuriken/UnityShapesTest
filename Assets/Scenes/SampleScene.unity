@@ -604,8 +604,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   duplicateCount: 3
   force: 4
+  as_duplicate: {fileID: 8300000, guid: 62efe3f80ec52df4ab54a4e0ad659bf9, type: 3}
+  as_click: {fileID: 8300000, guid: 441a70337c31521438e4c2ccbd4d1bd7, type: 3}
   duplicateParticules: {fileID: 3392309590886141319, guid: 8855b583bd62a944589b8f82a47818de, type: 3}
-  as_duplicate: {fileID: 8300000, guid: 5f7898e072822ce41b54a85d07858fc3, type: 3}
+  clickParticules: {fileID: 3392309590886141319, guid: c814d5de6fb50104391808ce665735b5, type: 3}
 --- !u!82 &936589186
 AudioSource:
   m_ObjectHideFlags: 0

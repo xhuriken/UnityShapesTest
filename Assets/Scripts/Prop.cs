@@ -19,11 +19,13 @@ public class Prop : MonoBehaviour
     private Animator m_animator;
 
     public float force = 2f;
-    public GameObject duplicateParticules;
     private bool isDragging = false;
     private CircleCollider2D m_cc;
     private AudioSource m_audioSource;
     public AudioClip as_duplicate;
+    public AudioClip as_click;
+    public GameObject duplicateParticules;
+    public GameObject clickParticules;
     void Start()
     {
         m_animator = GetComponent<Animator>();
@@ -77,12 +79,13 @@ public class Prop : MonoBehaviour
     }
     private void OnMouseDown()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) && !GameManager.Instance.isDragging)
         {
             clickCount++;
 
             if (clickCount >= duplicateCount)
             {
+                Debug.Log("Duplicate");
                 clickCount = 0;
                 m_audioSource.PlayOneShot(as_duplicate);
                 m_animator.SetTrigger("Duplicate");
@@ -90,7 +93,10 @@ public class Prop : MonoBehaviour
             }
             else
             {
+                Debug.Log("Click");
+                m_audioSource.PlayOneShot(as_click);
                 m_animator.SetTrigger("Click");
+                Instantiate(clickParticules, transform.position, Quaternion.identity);
             }
         }
 
