@@ -4,13 +4,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class Prop : MonoBehaviour
+public class FirstProp : MonoBehaviour
 {
     //Ca c'est un Prop, object commun entre touts les forme
     //Ce script sert a donnée les characteristique de la forme
+
+
     [Header("Properties")]
     [SerializeField]
     private int duplicateCount = 3;
+    [SerializeField]
+    private GameObject duplicateBall;
     public float force = 2f;
     private int clickCount = 0;
     //Component
@@ -32,7 +36,7 @@ public class Prop : MonoBehaviour
     private AudioSource m_audioSource;
 
     //State machine
-    private enum PropState { Idle, Click, Duplicate, Drag, Inhale }
+    private enum PropState { Idle, Click, Duplicate, Drag, }
     private PropState currentState = PropState.Idle;
 
 
@@ -104,9 +108,6 @@ public class Prop : MonoBehaviour
                     isDragged = false;
                 }
                 break;
-            case PropState.Inhale:
-                //Inhale animation
-                break;
         }
     }
 
@@ -128,8 +129,8 @@ public class Prop : MonoBehaviour
 
     private IEnumerator SpawnProp()
     {
-        GameObject newObject = Instantiate(gameObject, transform.position, Quaternion.identity);
-        newObject.name = gameObject.name;
+        GameObject newObject = Instantiate(duplicateBall, transform.position, Quaternion.identity);
+        newObject.name = "Ball";
         Vector2 randomDir = Random.insideUnitCircle.normalized;
         newObject.GetComponent<Rigidbody2D>().AddForce(randomDir * force, ForceMode2D.Impulse);
         yield return null;
