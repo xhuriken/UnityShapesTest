@@ -81,7 +81,7 @@ public class Prop : MonoBehaviour
                     }
                 }
                 //Right Click = Drag
-                if (Input.GetMouseButtonDown(1) && isMouseOver && !isInhaled)
+                if (Input.GetMouseButtonDown(1) && isMouseOver)
                 {
                     //Relative offset
                     Vector2 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -108,12 +108,13 @@ public class Prop : MonoBehaviour
                     transform.position = mouseWorldPos + (Vector2)dragOffset;
                     m_rb.velocity = Vector2.zero;
                 }
-                if (Input.GetMouseButtonUp(1))
+                if (Input.GetMouseButtonUp(1) || isInhaled)
                 {
                     currentState = PropState.Idle;
                     GameManager.Instance.isDragging = false;
                     isDragged = false;
                 }
+                
                 break;
             case PropState.Inhale:
                 //Inhale animation

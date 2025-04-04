@@ -13,11 +13,18 @@ public class StockMachine : MonoBehaviour
     private Animator m_animator;
 
     private Disc discComponent;
-
+    [Header("Particules/SFX")]
+    //Clips
+    public AudioClip as_inhale1;
+    public AudioClip as_inhale2;
+    //Particules
+    //Nothing
+    private AudioSource m_audioSource;
     void Start()
     {
         m_animator = GetComponent<Animator>();
         discComponent = GetComponent<Disc>();
+        m_audioSource = GetComponent<AudioSource>();
     }
 
     void Update()
@@ -103,7 +110,9 @@ public class StockMachine : MonoBehaviour
 
             yield return null;
         }
-
+        int randomIndex = Random.Range(0, 2);
+        AudioClip as_inhale = (randomIndex == 0) ? as_inhale1 : as_inhale2;
+        m_audioSource.PlayOneShot(as_inhale, 0.7f);
         m_animator.SetTrigger("Bounce");
         yield return new WaitForSeconds(0.5f);
 
