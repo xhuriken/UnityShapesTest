@@ -6,38 +6,36 @@ using UnityEngine.UIElements;
 
 public class Prop : MonoBehaviour
 {
-    //Ca c'est un Prop, object commun entre touts les forme
-    //Ce script sert a donnée les characteristique de la forme
+    //Ca c'est un Prop, object commun entre toutes les formes
+    //Ce script sert à donner les caractéristiques de la forme
     [Header("Properties")]
-    [SerializeField]
-    private int duplicateCount = 3;
+    [SerializeField] private int duplicateCount = 3;
     public float force = 2f;
     private int clickCount = 0;
-    //Component
+
+    // Composants
     private Animator m_animator;
     private Rigidbody2D m_rb;
     private CircleCollider2D m_cc;
     private Vector3 dragOffset;
-    //bools
+
+    // Booléens de gestion
     public bool isDragged = false;
-    private bool isMouseOver = false;
+    // On se passe de la variable isMouseOver et on utilise IsMouseOver() pour vérifier en temps réel.
 
     [Header("Particules/SFX")]
-    //Clips
     public AudioClip as_duplicate;
     public AudioClip as_click;
-    //Particules
     public GameObject duplicateParticules;
     public GameObject clickParticules;
     private AudioSource m_audioSource;
 
     [Header("Utils")]
-    public bool isInhaled = false; //This is change in StockMachine.cs
-    //State machine
+    public bool isInhaled = false; // modifié par StockMachine.cs
+    // State machine
     public enum PropState { Idle, Click, Duplicate, Drag, Inhale }
     public PropState currentState = PropState.Idle;
-
-    //the inhale state is just an animation (Trigger "Inhale")
+    // L'état Inhale correspond à l'animation (Trigger "Inhale")
 
     void Start()
     {
@@ -52,7 +50,7 @@ public class Prop : MonoBehaviour
         switch (currentState)
         {
             case PropState.Idle:
-
+                // Si l'objet est inhalé, passer en état Inhale
                 if (isInhaled)
                 {
                     currentState = PropState.Inhale;
@@ -60,8 +58,8 @@ public class Prop : MonoBehaviour
                     break;
                 }
 
-                //Left click = Click
-                if (Input.GetMouseButtonDown(0) && isMouseOver && !GameManager.Instance.isDragging)
+                // Clic gauche : déclenche Click ou Duplicate
+                if (Input.GetMouseButtonDown(0) && IsMouseOver() && !GameManager.Instance.isDragging)
                 {
                     clickCount++;
                     if (clickCount >= duplicateCount)
@@ -80,10 +78,9 @@ public class Prop : MonoBehaviour
                         Instantiate(clickParticules, transform.position, Quaternion.identity);
                     }
                 }
-                //Right Click = Drag
-                if (Input.GetMouseButtonDown(1) && isMouseOver)
+                // Clic droit : lance le drag
+                if (Input.GetMouseButtonDown(1) && IsMouseOver())
                 {
-                    //Relative offset
                     Vector2 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                     dragOffset = transform.position - (Vector3)mouseWorldPos;
                     m_rb.velocity = Vector2.zero;
@@ -114,27 +111,32 @@ public class Prop : MonoBehaviour
                     GameManager.Instance.isDragging = false;
                     isDragged = false;
                 }
-                
                 break;
+
             case PropState.Inhale:
-                //Inhale animation
+                // État géré par l'animation d'inhalation
                 break;
         }
     }
 
-    private void OnMouseEnter()
+    // Méthode de vérification personnalisée pour déterminer si la souris est sur l'objet
+    private bool IsMouseOver()
     {
-        isMouseOver = true;
-        //Debug.Log("Mouse is over the object");
-    }
+        Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Collider2D col = GetComponent<Collider2D>();
+        if (col == null)
+            return false;
 
-    private void OnMouseExit()
-    {
-
-        if (!isDragged)
+        // Pour un CircleCollider2D, vérifie la distance par rapport au centre
+        if (col is CircleCollider2D circle)
         {
-            isMouseOver = false;
-            //Debug.Log("Mouse is not over the object anymore");
+            float radius = circle.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
+            return Vector2.Distance(transform.position, mousePos) <= radius;
+        }
+        // Pour un PolygonCollider2D ou d'autres types, on utilise OverlapPoint
+        else
+        {
+            return col.OverlapPoint(mousePos);
         }
     }
 

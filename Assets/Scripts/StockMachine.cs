@@ -61,7 +61,7 @@ public class StockMachine : MonoBehaviour
         float elapsed = 0f;
         Vector3 startPos = obj.transform.position;
         Vector3 targetPos = transform.position;
-
+        obj.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
         float maxGapAngleDegrees = 80f;
         float stockMachineRadius = 1f;
 
