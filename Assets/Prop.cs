@@ -22,10 +22,13 @@ public class Prop : MonoBehaviour
     public GameObject duplicateParticules;
     private bool isDragging = false;
     private CircleCollider2D m_cc;
+    private AudioSource m_audioSource;
+    public AudioClip as_duplicate;
     void Start()
     {
         m_animator = GetComponent<Animator>();
         m_cc = GetComponent<CircleCollider2D>();
+        m_audioSource = GetComponent<AudioSource>();
     }
 
     private bool isMouseOver = false;
@@ -81,6 +84,7 @@ public class Prop : MonoBehaviour
             if (clickCount >= duplicateCount)
             {
                 clickCount = 0;
+                m_audioSource.PlayOneShot(as_duplicate);
                 m_animator.SetTrigger("Duplicate");
                 Instantiate(duplicateParticules, transform.position, Quaternion.identity);
             }
@@ -97,6 +101,7 @@ public class Prop : MonoBehaviour
     {
 
         GameObject newObject = Instantiate(gameObject, transform.position, Quaternion.identity);
+        newObject.name = gameObject.name;
         Vector2 randomDir = Random.insideUnitCircle.normalized; 
         newObject.GetComponent<Rigidbody2D>().AddForce(randomDir * force, ForceMode2D.Impulse);
 
