@@ -1,129 +1,136 @@
+using Shapes;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.UIElements;
 public class BlueBall : MonoBehaviour
 {
     [Header("Oscillation Settings")]
-    // Amplitude de l'oscillation (distance maximale par rapport à la position d'origine)
-    public float amplitude = 5f;
-    // Vitesse de déplacement (valeur absolue de la vélocité)
-    public float speed = 2f;
+    public float amplitude = 5f; // Distance maximale par rapport à l'origine sur l'axe Y
+    public float speed = 2f;     // Vitesse de déplacement verticale
 
     [Header("Friction Settings")]
-    // Facteur de réduction de la vélocité lorsqu'en état Friction
-    public float frictionFactor = 0.99f;
-    // Seuil sous lequel la vélocité est considérée comme nulle
-    public float frictionThreshold = 0.01f;
+    public float frictionFactor = 0.99f;      // Facteur de friction
+    public float frictionThreshold = 0.01f;   // Seuil pour arrêter la friction
 
-    // Position d'origine sur l'axe Y
+    // Position d'origine et bornes d'oscillation
     private float originY;
-    // Limites calculées par rapport à l'origine
     private float topY;
     private float bottomY;
 
-    // Machine à états pour le mouvement
-    private enum OscillationState { MovingUp, MovingDown, Friction }
-    private OscillationState currentState;
+    // Machine à états
+    private enum BallState { Oscillating, Friction, Duplicate }
+    private BallState currentState = BallState.Oscillating;
 
-    private Rigidbody2D m_rb;
-    private bool isCoroutineRunning = false;
+    private Rigidbody2D rb;
+    // Direction verticale : 1 = vers le haut, -1 = vers le bas
+    private int direction = 1;
+
+    // Référence au script Prop et stockage de l'état précédent de drag
+    private Prop prop;
+    private bool wasDragging = false;
 
     void Start()
     {
-        m_rb = GetComponent<Rigidbody2D>();
+        rb = GetComponent<Rigidbody2D>();
+        prop = GetComponent<Prop>();
 
-        // Stocker la position d'origine et calculer les limites d'oscillation
-        originY = transform.position.y;
-        topY = originY + amplitude;
-        bottomY = originY - amplitude;
+        // Initialisation de l'origine et des bornes d'oscillation
+        ResetOrigin(transform.position);
 
-        // Définir l'état initial en fonction de la position actuelle par rapport à l'origine
-        currentState = (transform.position.y <= originY) ? OscillationState.MovingUp : OscillationState.MovingDown;
-        SetVelocityForState();
+        // Démarrer le mouvement vers le haut
+        rb.velocity = new Vector2(0, speed * direction);
     }
 
     void Update()
     {
+        // Vérifier l'état de drag via le script Prop
+        if (prop != null)
+        {
+            // Si on vient de terminer un drag (passage de vrai à faux)
+            if (wasDragging && !prop.isDragged)
+            {
+               
+                // Réinitialiser l'origine de l'oscillation à la position actuelle
+                ResetOrigin(transform.position);
+                currentState = BallState.Oscillating;
+                rb.velocity = new Vector2(0, speed * direction);
+            }
+            wasDragging = prop.isDragged;
+        }
+
+        // Machine à états pour le mouvement de la balle
         switch (currentState)
         {
-            case OscillationState.MovingUp:
-                if (transform.position.y >= topY)
+            case BallState.Oscillating:
+                // Vérifier si la balle a atteint une des limites et inverser la direction
+                if (direction > 0 && transform.position.y >= topY)
                 {
-                    transform.position = new Vector3(transform.position.x, topY, transform.position.z);
-                    currentState = OscillationState.MovingDown;
-                    SetVelocityForState();
+                    direction = -1;
+                    rb.velocity = new Vector2(0, speed * direction);
+                }
+                else if (direction < 0 && transform.position.y <= bottomY)
+                {
+                    direction = 1;
+                    rb.velocity = new Vector2(0, speed * direction);
                 }
                 break;
 
-            case OscillationState.MovingDown:
-                if (transform.position.y <= bottomY)
-                {
-                    transform.position = new Vector3(transform.position.x, bottomY, transform.position.z);
-                    currentState = OscillationState.MovingUp;
-                    SetVelocityForState();
-                }
-                break;
-
-            case OscillationState.Friction:
+            case BallState.Friction:
                 // Appliquer la friction sur la vélocité
-                m_rb.velocity *= frictionFactor;
-                if (m_rb.velocity.magnitude < frictionThreshold)
+                rb.velocity *= frictionFactor;
+                // Lorsque la vitesse devient trop faible, reprendre l'oscillation
+                if (rb.velocity.magnitude < frictionThreshold)
                 {
-                    m_rb.velocity = Vector2.zero;
-                    // Une fois stoppée, reprendre l'oscillation en fonction de la position par rapport à l'origine
-                    currentState = (transform.position.y <= originY) ? OscillationState.MovingUp : OscillationState.MovingDown;
-                    SetVelocityForState();
+                    rb.velocity = Vector2.zero;
+                    // Choisir la direction en fonction de la position actuelle
+                    float distToTop = Mathf.Abs(topY - transform.position.y);
+                    float distToBottom = Mathf.Abs(transform.position.y - bottomY);
+                    direction = (distToTop < distToBottom) ? -1 : 1;
+                    rb.velocity = new Vector2(0, speed * direction);
+                    currentState = BallState.Oscillating;
                 }
                 break;
+
+            case BallState.Duplicate:
+
+
+
+                rb.velocity = Vector2.zero;
+                StartCoroutine(changeState());
+
+                break;
+
         }
-
-        // Si la vélocité est nulle et aucune coroutine n'est en cours, lancer la coroutine pour remettre à jour l'origine
-        if (m_rb.velocity == Vector2.zero && !isCoroutineRunning)
-        {
-            StartCoroutine(WaitForOscillation());
-        }
+                if (prop.currentState == Prop.PropState.Duplicate)
+                {
+                    currentState = BallState.Duplicate;
+                }
     }
-
-    // Affecte la vélocité en fonction de l'état courant (en dehors de Friction)
-    private void SetVelocityForState()
-    {
-        if (currentState == OscillationState.MovingUp)
-            m_rb.velocity = new Vector2(0, speed);
-        else if (currentState == OscillationState.MovingDown)
-            m_rb.velocity = new Vector2(0, -speed);
-    }
-
-    // Lorsqu'une collision avec un objet tagué "Ball" est détectée, passer en état Friction
+    // Lorsqu'une collision avec un objet tagué "Ball" est détectée, passage en mode friction
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Ball"))
         {
-            currentState = OscillationState.Friction;
+
+                currentState = BallState.Friction;
         }
     }
 
-    // Coroutine qui remet à jour l'origine et les limites, puis redémarre l'oscillation
-    private IEnumerator WaitForOscillation()
+    /// <summary>
+    /// Met à jour l'origine de l'oscillation en fonction d'une nouvelle position.
+    /// </summary>
+    /// <param name="newOrigin">La nouvelle position (utilise uniquement l'axe Y)</param>
+    public void ResetOrigin(Vector3 newOrigin)
     {
-        Debug.Log("newpos");
-        isCoroutineRunning = true;
-        // Mettre à jour l'origine à la position actuelle
-        originY = transform.position.y;
+        originY = newOrigin.y;
         topY = originY + amplitude;
         bottomY = originY - amplitude;
-        Debug.Log(originY);
-        Debug.Log(topY);
-        Debug.Log(bottomY);
+    }
 
-        // Attendre un court instant pour stabiliser la position
-        yield return new WaitForSeconds(1f);
-
-        // On choisit ici de reprendre en descendant (vous pouvez adapter selon votre logique)
-        currentState = (OscillationState.MovingDown);
-        SetVelocityForState();
-
-        // Attendre encore un peu avant de libérer la coroutine
-
-        isCoroutineRunning = false;
+    private IEnumerator changeState()
+    {
+       yield return new WaitForSeconds(2f);
+       currentState = BallState.Oscillating;
     }
 }

@@ -19,7 +19,7 @@ public class Prop : MonoBehaviour
     private CircleCollider2D m_cc;
     private Vector3 dragOffset;
     //bools
-    private bool isDragged = false;
+    public bool isDragged = false;
     private bool isMouseOver = false;
 
     [Header("Particules/SFX")]
@@ -34,8 +34,8 @@ public class Prop : MonoBehaviour
     [Header("Utils")]
     public bool isInhaled = false; //This is change in StockMachine.cs
     //State machine
-    private enum PropState { Idle, Click, Duplicate, Drag, Inhale }
-    private PropState currentState = PropState.Idle;
+    public enum PropState { Idle, Click, Duplicate, Drag, Inhale }
+    public PropState currentState = PropState.Idle;
 
     //the inhale state is just an animation (Trigger "Inhale")
 
@@ -142,6 +142,7 @@ public class Prop : MonoBehaviour
         GameObject newObject = Instantiate(gameObject, transform.position, Quaternion.identity);
         newObject.name = gameObject.name;
         Vector2 randomDir = Random.insideUnitCircle.normalized;
+        Debug.Log(randomDir);
         newObject.GetComponent<Rigidbody2D>().AddForce(randomDir * force, ForceMode2D.Impulse);
         yield return null;
     }
