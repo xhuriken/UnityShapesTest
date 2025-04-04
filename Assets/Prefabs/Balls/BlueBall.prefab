@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 6808941592138104605}
   - component: {fileID: 5042275014090596165}
   - component: {fileID: 3288035710746070896}
-  - component: {fileID: 7507768763009077533}
   - component: {fileID: 6372915413674924732}
   - component: {fileID: 6373886605074898162}
   - component: {fileID: 511754151901271701}
@@ -142,27 +141,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &7507768763009077533
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3504687067306247434}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b13dc75c1c445f43b98065238e16086, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  duplicateCount: 3
-  force: 4
-  isDragged: 0
-  as_duplicate: {fileID: 8300000, guid: 62efe3f80ec52df4ab54a4e0ad659bf9, type: 3}
-  as_click: {fileID: 8300000, guid: 441a70337c31521438e4c2ccbd4d1bd7, type: 3}
-  duplicateParticules: {fileID: 3392309590886141319, guid: 8855b583bd62a944589b8f82a47818de, type: 3}
-  clickParticules: {fileID: 3392309590886141319, guid: c814d5de6fb50104391808ce665735b5, type: 3}
-  isInhaled: 0
-  currentState: 0
 --- !u!50 &6372915413674924732
 Rigidbody2D:
   serializedVersion: 4
@@ -237,10 +215,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e41db94d18b12ed4b818968938729c2d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  duplicateCount: 3
+  force: 4
+  isDragged: 0
+  as_duplicate: {fileID: 8300000, guid: 62efe3f80ec52df4ab54a4e0ad659bf9, type: 3}
+  as_click: {fileID: 8300000, guid: 441a70337c31521438e4c2ccbd4d1bd7, type: 3}
+  duplicateParticules: {fileID: 3392309590886141319, guid: 8855b583bd62a944589b8f82a47818de, type: 3}
+  clickParticules: {fileID: 3392309590886141319, guid: c814d5de6fb50104391808ce665735b5, type: 3}
+  isInhaled: 0
+  currentState: 0
+  isClickable: 1
   amplitude: 2
-  speed: 3
+  oscillationSpeed: 2
   frictionFactor: 0.99
   frictionThreshold: 0.01
+  blueState: 0
 --- !u!82 &7539281244604695090
 AudioSource:
   m_ObjectHideFlags: 0

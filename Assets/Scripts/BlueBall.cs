@@ -3,134 +3,230 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+
 public class BlueBall : MonoBehaviour
 {
+    [Header("Properties")]
+    [SerializeField] private int duplicateCount = 3;
+    public float force = 2f;
+    private int clickCount = 0;
+
+    // Composants
+    private Animator m_animator;
+    private Rigidbody2D m_rb;
+    private CircleCollider2D m_cc;
+    private Vector3 dragOffset;
+
+    public bool isDragged = false;
+
+    [Header("Particules/SFX")]
+    public AudioClip as_duplicate;
+    public AudioClip as_click;
+    public GameObject duplicateParticules;
+    public GameObject clickParticules;
+    private AudioSource m_audioSource;
+
+    [Header("Utils")]
+    public bool isInhaled = false; // modifié par StockMachine
+    public enum BlueBallState { Spawn, Idle, Click, Duplicate, Drag, Friction, Inhale }
+    public BlueBallState currentState = BlueBallState.Spawn;
+
     [Header("Oscillation Settings")]
-    public float amplitude = 5f; // Distance maximale par rapport à l'origine sur l'axe Y
-    public float speed = 2f;     // Vitesse de déplacement verticale
+    public float amplitude = 5f;           // Amplitude verticale
+    public float oscillationSpeed = 2f;      // Vitesse d'oscillation
 
     [Header("Friction Settings")]
-    public float frictionFactor = 0.99f;      // Facteur de friction
-    public float frictionThreshold = 0.01f;   // Seuil pour arrêter la friction
+    public float frictionFactor = 0.99f;
+    public float frictionThreshold = 0.01f;
 
-    // Position d'origine et bornes d'oscillation
+    // Variables d'oscillation
     private float originY;
     private float topY;
     private float bottomY;
-
-    // Machine à états
-    private enum BallState { Oscillating, Friction, Duplicate }
-    private BallState currentState = BallState.Oscillating;
-
-    private Rigidbody2D rb;
-    // Direction verticale : 1 = vers le haut, -1 = vers le bas
-    private int direction = 1;
-
-    // Référence au script Prop et stockage de l'état précédent de drag
-    private Prop prop;
-    private bool wasDragging = false;
+    private int direction = 1; // 1 vers le haut, -1 vers le bas
+    public bool isFreeze = false;
 
     void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
-        prop = GetComponent<Prop>();
+        m_animator = GetComponent<Animator>();
+        m_cc = GetComponent<CircleCollider2D>();
+        m_audioSource = GetComponent<AudioSource>();
+        m_rb = GetComponent<Rigidbody2D>();
 
-        // Initialisation de l'origine et des bornes d'oscillation
-        ResetOrigin(transform.position);
+        // Démarrer en Spawn
+        currentState = BlueBallState.Spawn;
+        m_rb.velocity = Vector2.zero;
+        StartCoroutine(TransitionFromSpawn());
 
-        // Démarrer le mouvement vers le haut
-        rb.velocity = new Vector2(0, speed * direction);
+        // Initialiser les bornes d'oscillation à la position actuelle
+        originY = transform.position.y;
+        topY = originY + amplitude;
+        bottomY = originY - amplitude;
+        direction = 1;
+    }
+
+    IEnumerator TransitionFromSpawn()
+    {
+        yield return new WaitForSeconds(1f);
+        currentState = BlueBallState.Idle;
+        // En Idle, la BlueBall oscille automatiquement
+        m_rb.velocity = new Vector2(0, oscillationSpeed * direction);
     }
 
     void Update()
     {
-        // Vérifier l'état de drag via le script Prop
-        if (prop != null)
+        if (isInhaled)
         {
-            // Si on vient de terminer un drag (passage de vrai à faux)
-            if (wasDragging && !prop.isDragged)
-            {
-               
-                // Réinitialiser l'origine de l'oscillation à la position actuelle
-                ResetOrigin(transform.position);
-                currentState = BallState.Oscillating;
-                rb.velocity = new Vector2(0, speed * direction);
-            }
-            wasDragging = prop.isDragged;
+            currentState = BlueBallState.Inhale;
+            m_animator.SetTrigger("Inhale");
+            m_rb.velocity = Vector2.zero;
+            return;
         }
 
-        // Machine à états pour le mouvement de la balle
         switch (currentState)
         {
-            case BallState.Oscillating:
-                // Vérifier si la balle a atteint une des limites et inverser la direction
+            case BlueBallState.Spawn:
+                m_rb.velocity = Vector2.zero;
+                break;
+
+            case BlueBallState.Idle:
+                // Ici, Idle correspond à l'état Oscillating.
+                // Gestion des inputs
+                ClickEvent();
+                // Oscillation verticale automatique
+                transform.position += new Vector3(0, oscillationSpeed * direction * Time.deltaTime, 0);
                 if (direction > 0 && transform.position.y >= topY)
                 {
                     direction = -1;
-                    rb.velocity = new Vector2(0, speed * direction);
+                    m_rb.velocity = new Vector2(0, oscillationSpeed * direction);
                 }
                 else if (direction < 0 && transform.position.y <= bottomY)
                 {
                     direction = 1;
-                    rb.velocity = new Vector2(0, speed * direction);
+                    m_rb.velocity = new Vector2(0, oscillationSpeed * direction);
                 }
                 break;
 
-            case BallState.Friction:
-                // Appliquer la friction sur la vélocité
-                rb.velocity *= frictionFactor;
-                // Lorsque la vitesse devient trop faible, reprendre l'oscillation
-                if (rb.velocity.magnitude < frictionThreshold)
+            case BlueBallState.Click:
+                currentState = BlueBallState.Idle;
+                break;
+
+            case BlueBallState.Duplicate:
+
+                currentState = BlueBallState.Idle;
+                break;
+
+            case BlueBallState.Drag:
+                if (Input.GetMouseButton(1))
                 {
-                    rb.velocity = Vector2.zero;
-                    // Choisir la direction en fonction de la position actuelle
+                    Vector2 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                    transform.position = mouseWorldPos + (Vector2)dragOffset;
+                    m_rb.velocity = Vector2.zero;
+                }
+                if (Input.GetMouseButtonUp(1) || isInhaled)
+                {
+                    currentState = BlueBallState.Idle;
+                    GameManager.Instance.isDragging = false;
+                    isDragged = false;
+                    // Réinitialiser l'origine de l'oscillation à la position actuelle
+                    originY = transform.position.y;
+                    topY = originY + amplitude;
+                    bottomY = originY - amplitude;
+                }
+                break;
+
+            case BlueBallState.Friction:
+                ClickEvent();
+                m_rb.velocity *= frictionFactor;
+                if (m_rb.velocity.magnitude < frictionThreshold)
+                {
+                    m_rb.velocity = Vector2.zero;
                     float distToTop = Mathf.Abs(topY - transform.position.y);
                     float distToBottom = Mathf.Abs(transform.position.y - bottomY);
                     direction = (distToTop < distToBottom) ? -1 : 1;
-                    rb.velocity = new Vector2(0, speed * direction);
-                    currentState = BallState.Oscillating;
+                    m_rb.velocity = new Vector2(0, oscillationSpeed * direction);
+                    currentState = BlueBallState.Idle;
                 }
                 break;
 
-            case BallState.Duplicate:
-
-
-
-                rb.velocity = Vector2.zero;
-                StartCoroutine(changeState());
-
+            case BlueBallState.Inhale:
+                m_rb.velocity = Vector2.zero;
                 break;
-
         }
-                if (prop.currentState == Prop.PropState.Duplicate)
-                {
-                    currentState = BallState.Duplicate;
-                }
+
+        if(isFreeze)
+        {
+            m_rb.velocity = Vector2.zero;
+        }
+
     }
-    // Lorsqu'une collision avec un objet tagué "Ball" est détectée, passage en mode friction
+
+    // Vérifie si la souris est sur la BlueBall
+    private bool IsMouseOver()
+    {
+        Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Collider2D col = GetComponent<Collider2D>();
+        if (col == null)
+            return false;
+        if (col is CircleCollider2D circle)
+        {
+            float radius = circle.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
+            return Vector2.Distance(transform.position, mousePos) <= radius;
+        }
+        else
+        {
+            return col.OverlapPoint(mousePos);
+        }
+    }
+
+    private void ClickEvent()
+    {
+        if (Input.GetMouseButtonDown(0) && IsMouseOver() && !GameManager.Instance.isDragging)
+        {
+            clickCount++;
+            if (clickCount >= duplicateCount)
+            {
+                clickCount = 0;
+                currentState = BlueBallState.Duplicate;
+                m_audioSource.PlayOneShot(as_duplicate);
+                m_animator.SetTrigger("Duplicate");
+                Instantiate(duplicateParticules, transform.position, Quaternion.identity);
+            }
+            else
+            {
+                currentState = BlueBallState.Click;
+                m_audioSource.PlayOneShot(as_click);
+                m_animator.SetTrigger("Click");
+                Instantiate(clickParticules, transform.position, Quaternion.identity);
+            }
+        }
+        if (Input.GetMouseButtonDown(1) && IsMouseOver())
+        {
+            Vector2 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            dragOffset = transform.position - (Vector3)mouseWorldPos;
+            m_rb.velocity = Vector2.zero;
+            GameManager.Instance.isDragging = true;
+            currentState = BlueBallState.Drag;
+            isDragged = true;
+        }
+    }
+
+    private IEnumerator SpawnProp()
+    {
+        GameObject newObject = Instantiate(gameObject, transform.position, Quaternion.identity);
+        newObject.name = gameObject.name;
+        Vector2 randomDir = Random.insideUnitCircle.normalized;
+        Debug.Log(randomDir);
+        newObject.GetComponent<Rigidbody2D>().AddForce(randomDir * force, ForceMode2D.Impulse);
+        yield return null;
+    }
+
+    // Lorsqu'une collision avec un objet tagué "Ball" se produit, passage en Friction
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Ball"))
         {
-
-                currentState = BallState.Friction;
+            currentState = BlueBallState.Friction;
         }
-    }
-
-    /// <summary>
-    /// Met à jour l'origine de l'oscillation en fonction d'une nouvelle position.
-    /// </summary>
-    /// <param name="newOrigin">La nouvelle position (utilise uniquement l'axe Y)</param>
-    public void ResetOrigin(Vector3 newOrigin)
-    {
-        originY = newOrigin.y;
-        topY = originY + amplitude;
-        bottomY = originY - amplitude;
-    }
-
-    private IEnumerator changeState()
-    {
-       yield return new WaitForSeconds(2f);
-       currentState = BallState.Oscillating;
     }
 }
