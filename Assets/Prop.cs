@@ -19,11 +19,7 @@ public class Prop : MonoBehaviour
     private Animator m_animator;
 
     public float force = 2f;
-    //public float ct_click = 0.1f;
-    //public float ct_duplicate = 0.6f;
-    //private float currentct_click = 0f;
-    //private float currentct_duplicate = 0f;
-    // Start is called before the first frame update
+    public GameObject duplicateParticules;
     private bool isDragging = false;
     private CircleCollider2D m_cc;
     void Start()
@@ -85,15 +81,12 @@ public class Prop : MonoBehaviour
             if (clickCount >= duplicateCount)
             {
                 clickCount = 0;
-                //Debug.Log("Click count reset to 0");
                 m_animator.SetTrigger("Duplicate");
-                //currentct_duplicate = 0f;
-
+                Instantiate(duplicateParticules, transform.position, Quaternion.identity);
             }
             else
             {
                 m_animator.SetTrigger("Click");
-                //currentct_click = 0f;
             }
         }
 
@@ -104,31 +97,11 @@ public class Prop : MonoBehaviour
     {
 
         GameObject newObject = Instantiate(gameObject, transform.position, Quaternion.identity);
-        //Debug.Log("New object spawned: " + newObject.name);
-
-        //Disc newDisc = newObject.GetComponent<Disc>();
-        //WaitForSeconds wait = new WaitForSeconds(0.1f);
         Vector2 randomDir = Random.insideUnitCircle.normalized; 
         newObject.GetComponent<Rigidbody2D>().AddForce(randomDir * force, ForceMode2D.Impulse);
-        //newObject.GetComponent<CircleCollider2D>().enabled = true;
-        //float elapsed = 0f;
-        //float startRadius = 0;
-        //float targetRadius = startRadius + newDisc.Radius;
 
-        //while (elapsed < 0.3f)
-        //{
-        //    elapsed += Time.deltaTime;
-        //    float newRadius = Mathf.Lerp(startRadius, targetRadius, elapsed / 0.3f);
-        //    newDisc.Radius = newRadius;
-        //    Debug.Log("Elapsed time: " + elapsed);
-        //    Debug.Log("newRadius : " + newRadius);
-        //    yield return null;
-        //}
-
-        //newDisc.Radius = targetRadius;
         yield return null;
 
     }
-
 
 }
