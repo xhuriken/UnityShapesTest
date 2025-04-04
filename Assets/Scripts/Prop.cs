@@ -31,10 +31,13 @@ public class Prop : MonoBehaviour
     public GameObject clickParticules;
     private AudioSource m_audioSource;
 
+    [Header("Utils")]
+    public bool isInhaled = false; //This is change in StockMachine.cs
     //State machine
     private enum PropState { Idle, Click, Duplicate, Drag, Inhale }
     private PropState currentState = PropState.Idle;
 
+    //the inhale state is just an animation (Trigger "Inhale")
 
     void Start()
     {
@@ -49,6 +52,14 @@ public class Prop : MonoBehaviour
         switch (currentState)
         {
             case PropState.Idle:
+
+                if (isInhaled)
+                {
+                    currentState = PropState.Inhale;
+                    m_animator.SetTrigger("Inhale");
+                    break;
+                }
+
                 //Left click = Click
                 if (Input.GetMouseButtonDown(0) && isMouseOver && !GameManager.Instance.isDragging)
                 {
@@ -70,7 +81,7 @@ public class Prop : MonoBehaviour
                     }
                 }
                 //Right Click = Drag
-                if (Input.GetMouseButtonDown(1) && isMouseOver)
+                if (Input.GetMouseButtonDown(1) && isMouseOver && !isInhaled)
                 {
                     //Relative offset
                     Vector2 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
