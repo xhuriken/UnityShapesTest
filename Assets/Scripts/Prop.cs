@@ -1,118 +1,134 @@
 using Shapes;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using Unity.VisualScripting;
-using UnityEditor.Build.Content;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 public class Prop : MonoBehaviour
 {
-
     //Ca c'est un Prop, object commun entre touts les forme
     //Ce script sert a donnée les characteristique de la forme
-
+    [Header("Properties")]
     [SerializeField]
     private int duplicateCount = 3;
-    private int clickCount = 0;
-    private Animator m_animator;
-
     public float force = 2f;
-    private bool isDragging = false;
+    private int clickCount = 0;
+    //Component
+    private Animator m_animator;
+    private Rigidbody2D m_rb;
     private CircleCollider2D m_cc;
-    private AudioSource m_audioSource;
+    private Vector3 dragOffset;
+    //bools
+    private bool isDragged = false;
+    private bool isMouseOver = false;
+
+    [Header("Particules/SFX")]
+    //Clips
     public AudioClip as_duplicate;
     public AudioClip as_click;
+    //Particules
     public GameObject duplicateParticules;
     public GameObject clickParticules;
+    private AudioSource m_audioSource;
+
+    //State machine
+    private enum PropState { Idle, Click, Duplicate, Drag }
+    private PropState currentState = PropState.Idle;
+
+
     void Start()
     {
         m_animator = GetComponent<Animator>();
         m_cc = GetComponent<CircleCollider2D>();
         m_audioSource = GetComponent<AudioSource>();
+        m_rb = GetComponent<Rigidbody2D>();
     }
 
-    private bool isMouseOver = false;
+    void Update()
+    {
+        switch (currentState)
+        {
+            case PropState.Idle:
+                //Left click = Click
+                if (Input.GetMouseButtonDown(0) && isMouseOver && !GameManager.Instance.isDragging)
+                {
+                    clickCount++;
+                    if (clickCount >= duplicateCount)
+                    {
+                        clickCount = 0;
+                        currentState = PropState.Duplicate;
+                        m_audioSource.PlayOneShot(as_duplicate);
+                        m_animator.SetTrigger("Duplicate");
+                        Instantiate(duplicateParticules, transform.position, Quaternion.identity);
+                    }
+                    else
+                    {
+                        currentState = PropState.Click;
+                        m_audioSource.PlayOneShot(as_click);
+                        m_animator.SetTrigger("Click");
+                        Instantiate(clickParticules, transform.position, Quaternion.identity);
+                    }
+                }
+                //Right Click = Drag
+                if (Input.GetMouseButtonDown(1) && isMouseOver)
+                {
+                    //Relative offset
+                    Vector2 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                    dragOffset = transform.position - (Vector3)mouseWorldPos;
+                    m_rb.velocity = Vector2.zero;
+                    GameManager.Instance.isDragging = true;
+                    currentState = PropState.Drag;
+                    isDragged = true;
+                }
+                break;
+
+            case PropState.Click:
+                currentState = PropState.Idle;
+                break;
+
+            case PropState.Duplicate:
+                currentState = PropState.Idle;
+                break;
+
+            case PropState.Drag:
+                if (Input.GetMouseButton(1))
+                {
+                    Vector2 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                    transform.position = mouseWorldPos + (Vector2)dragOffset;
+                    m_rb.velocity = Vector2.zero;
+                }
+                if (Input.GetMouseButtonUp(1))
+                {
+                    currentState = PropState.Idle;
+                    GameManager.Instance.isDragging = false;
+                    isDragged = false;
+                }
+                break;
+        }
+    }
 
     private void OnMouseEnter()
     {
         isMouseOver = true;
+        //Debug.Log("Mouse is over the object");
     }
 
     private void OnMouseExit()
     {
 
-        if (!GameManager.Instance.isDragging)
+        if (!isDragged)
         {
             isMouseOver = false;
+            //Debug.Log("Mouse is not over the object anymore");
         }
-    }
-
-    private void Update()
-    {
-        if (isMouseOver && Input.GetMouseButton(1))
-        {
-            if (!GameManager.Instance.isDragging)
-            {
-                GameManager.Instance.isDragging = true;
-                isDragging = true;
-            }
-
-            if (isDragging)
-            {
-                Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                transform.position = mousePos;
-            }
-        }
-
-        if (GameManager.Instance.isDragging && Input.GetMouseButtonUp(1))
-        {
-            GameManager.Instance.isDragging = false;
-            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            //Si la mousPos est dans le cercle
-            if (Vector2.Distance(mousePos, transform.position) < m_cc.radius)
-            {
-                isMouseOver = true;
-            }
-        }
-    }
-    private void OnMouseDown()
-    {
-        if (Input.GetMouseButtonDown(0) && !GameManager.Instance.isDragging)
-        {
-            clickCount++;
-
-            if (clickCount >= duplicateCount)
-            {
-                Debug.Log("Duplicate");
-                clickCount = 0;
-                m_audioSource.PlayOneShot(as_duplicate);
-                m_animator.SetTrigger("Duplicate");
-                Instantiate(duplicateParticules, transform.position, Quaternion.identity);
-            }
-            else
-            {
-                Debug.Log("Click");
-                m_audioSource.PlayOneShot(as_click);
-                m_animator.SetTrigger("Click");
-                Instantiate(clickParticules, transform.position, Quaternion.identity);
-            }
-        }
-
-
     }
 
     private IEnumerator SpawnProp()
     {
-
         GameObject newObject = Instantiate(gameObject, transform.position, Quaternion.identity);
         newObject.name = gameObject.name;
-        Vector2 randomDir = Random.insideUnitCircle.normalized; 
+        Vector2 randomDir = Random.insideUnitCircle.normalized;
         newObject.GetComponent<Rigidbody2D>().AddForce(randomDir * force, ForceMode2D.Impulse);
-
         yield return null;
-
     }
-
 }

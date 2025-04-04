@@ -363,7 +363,7 @@ GameObject:
   m_Component:
   - component: {fileID: 936589177}
   - component: {fileID: 936589180}
-  - component: {fileID: 936589185}
+  - component: {fileID: 936589187}
   - component: {fileID: 936589179}
   - component: {fileID: 936589178}
   - component: {fileID: 936589182}
@@ -590,24 +590,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 0
---- !u!114 &936589185
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 936589176}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 91cf43a6c377bf148b8d4b606afd2244, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  duplicateCount: 3
-  force: 4
-  as_duplicate: {fileID: 8300000, guid: 62efe3f80ec52df4ab54a4e0ad659bf9, type: 3}
-  as_click: {fileID: 8300000, guid: 441a70337c31521438e4c2ccbd4d1bd7, type: 3}
-  duplicateParticules: {fileID: 3392309590886141319, guid: 8855b583bd62a944589b8f82a47818de, type: 3}
-  clickParticules: {fileID: 3392309590886141319, guid: c814d5de6fb50104391808ce665735b5, type: 3}
 --- !u!82 &936589186
 AudioSource:
   m_ObjectHideFlags: 0
@@ -704,6 +686,24 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &936589187
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 936589176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b13dc75c1c445f43b98065238e16086, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  duplicateCount: 3
+  force: 2
+  as_duplicate: {fileID: 8300000, guid: 62efe3f80ec52df4ab54a4e0ad659bf9, type: 3}
+  as_click: {fileID: 8300000, guid: 441a70337c31521438e4c2ccbd4d1bd7, type: 3}
+  duplicateParticules: {fileID: 3392309590886141319, guid: 8855b583bd62a944589b8f82a47818de, type: 3}
+  clickParticules: {fileID: 3392309590886141319, guid: c814d5de6fb50104391808ce665735b5, type: 3}
 --- !u!1 &1131635014
 GameObject:
   m_ObjectHideFlags: 0
