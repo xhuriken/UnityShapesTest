@@ -6,7 +6,7 @@ public class Zone : MonoBehaviour
 {
     public float Width = 35.5f;
     public float Height = 20f;
-    private Rectangle zone;
+    public Rectangle zone;
 
     public float transitionDuration = 0.5f;
     private bool isInTransition = false;

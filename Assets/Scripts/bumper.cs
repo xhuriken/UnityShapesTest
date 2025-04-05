@@ -47,13 +47,15 @@ public class Bumper : MonoBehaviour
                     Vector2 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                     dragOffset = transform.position - (Vector3)mouseWorldPos;
                     m_rb.velocity = Vector2.zero;
-                    currentState = BumperState.Drag;
+                    GameManager.Instance.isDragging = true;
                     isDragged = true;
                     Debug.Log("Drag started");
+                    currentState = BumperState.Drag;
                 }
                 break;
 
             case BumperState.Drag:
+                GameManager.Instance.isDragging = true;
                 // Rotation avec la molette pendant le drag
                 float scroll = Input.GetAxis("Mouse ScrollWheel");
                 if (Mathf.Abs(scroll) > 0.001f)
@@ -74,6 +76,7 @@ public class Bumper : MonoBehaviour
                 {
                     currentState = BumperState.Idle;
                     isDragged = false;
+                    GameManager.Instance.isDragging = false;
                     Debug.Log("Drag ended, checking collisions");
                     CheckLayerCollisionAndRepulse();
                 }
@@ -81,7 +84,6 @@ public class Bumper : MonoBehaviour
         }
     }
 
-    // Méthode de vérification de la présence de la souris sur l'objet
     private bool IsMouseOver()
     {
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -89,18 +91,15 @@ public class Bumper : MonoBehaviour
         if (col == null)
             return false;
 
-        // Pour un CircleCollider2D, on vérifie si la distance entre le centre et la souris est inférieure au rayon.
         if (col is CircleCollider2D circle)
         {
             float radius = circle.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
             return Vector2.Distance(transform.position, mousePos) <= radius;
         }
-        // Pour un PolygonCollider2D, on utilise OverlapPoint pour savoir si le point se trouve à l'intérieur.
         else if (col is PolygonCollider2D)
         {
             return col.OverlapPoint(mousePos);
         }
-        // Pour les autres types (BoxCollider2D, CapsuleCollider2D, etc.), on utilise aussi OverlapPoint.
         else
         {
             return col.OverlapPoint(mousePos);
@@ -154,9 +153,9 @@ public class Bumper : MonoBehaviour
         else if (col is PolygonCollider2D)
         {
             ContactFilter2D filter = new ContactFilter2D();
-            filter.useTriggers = true; // Ajustez selon vos besoins
+            filter.useTriggers = true;
             filter.SetLayerMask(LayerMask.GetMask("Objects"));
-            Collider2D[] results = new Collider2D[10]; // taille arbitraire
+            Collider2D[] results = new Collider2D[10]; 
             int count = col.OverlapCollider(filter, results);
             Debug.Log("OverlapCollider count: " + count);
             hits = new Collider2D[count];
@@ -182,14 +181,13 @@ public class Bumper : MonoBehaviour
             if (hit.gameObject != gameObject && hit.gameObject.layer == LayerMask.NameToLayer("Objects"))
             {
                 Debug.Log("Found collision with: " + hit.gameObject.name);
-                // Repulser uniquement si collision détectée à la fin du drag
                 RepulseDraggedWith(hit.gameObject);
                 break;
             }
         }
     }
 
-    // Méthode utilisée en collision immédiate (hors drag) pour repulser les deux objets
+ 
     private void RepulseWith(GameObject other)
     {
         Rigidbody2D otherRb = other.GetComponent<Rigidbody2D>();
