@@ -161,6 +161,16 @@ public class RedBall : MonoBehaviour
         }
     }
 
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Bumper"))
+        {
+            currentState = RedBallState.Idle;
+            isDragged = false;
+            GameManager.Instance.isDragging = false;
+        }
+    }
+
     private IEnumerator SpawnProp()
     {
         GameObject newObject = Instantiate(gameObject, transform.position, Quaternion.identity);

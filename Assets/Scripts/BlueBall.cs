@@ -231,4 +231,14 @@ public class BlueBall : MonoBehaviour
             currentState = BlueBallState.Friction;
         }
     }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Bumper"))
+        {
+            currentState = BlueBallState.Idle;
+            isDragged = false;
+            GameManager.Instance.isDragging = false;
+        }
+    }
 }

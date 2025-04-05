@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Ball
   - FirstBall
+  - Bumper
   layers:
   - Default
   - TransparentFX

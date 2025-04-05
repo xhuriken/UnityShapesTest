@@ -12,12 +12,19 @@ public class Bumper : MonoBehaviour
     private Animator animator;
     private CircleCollider2D circleCollider;
 
-    // Variables de drag
+    [Header("Utils")]
     private Vector3 dragOffset;
     private bool isDragged = false;
-    // On n'utilise plus isMouseOver en variable, on utilisera la méthode IsMouseOver()
 
-    // Machine à états
+    [Header("Particules/SFX")]
+    //Clips
+    public AudioClip as_bump1;
+    public AudioClip as_bump2;
+    public AudioClip as_bump3;
+    public AudioClip as_bump4;
+    public AudioClip as_bump5;
+    private AudioSource m_audioSource;
+
     private enum BumperState { Idle, Drag }
     private BumperState currentState = BumperState.Idle;
 
@@ -26,6 +33,7 @@ public class Bumper : MonoBehaviour
         m_rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         circleCollider = GetComponent<CircleCollider2D>();
+        m_audioSource = GetComponent<AudioSource>();
     }
 
     void Update()
@@ -33,7 +41,7 @@ public class Bumper : MonoBehaviour
         switch (currentState)
         {
             case BumperState.Idle:
-                // Vérification en temps réel via IsMouseOver()
+
                 if (Input.GetMouseButtonDown(1) && IsMouseOver())
                 {
                     Vector2 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -109,8 +117,14 @@ public class Bumper : MonoBehaviour
             Rigidbody2D ballRigidbody = collision.gameObject.GetComponent<Rigidbody2D>();
             if (ballRigidbody != null)
             {
-                Debug.Log("OnTriggerEnter2D: Ball collision with " + collision.gameObject.name);
+                //Debug.Log("OnTriggerEnter2D: Ball collision with " + collision.gameObject.name);
                 animator.SetTrigger("IsBump");
+                AudioClip[] bumpSounds = { as_bump1, as_bump2, as_bump3, as_bump4, as_bump5 };
+                int randomIndex = Random.Range(0, bumpSounds.Length);
+                AudioClip as_bump = bumpSounds[randomIndex];
+
+                m_audioSource.PlayOneShot(as_bump, 0.7f);
+                
                 Vector2 forceDirection = transform.up;
                 ballRigidbody.AddForce(-forceDirection * bumpForce, ForceMode2D.Impulse);
             }
