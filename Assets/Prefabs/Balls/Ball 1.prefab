@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 2633064697578483863}
   - component: {fileID: 8049560452109068285}
   - component: {fileID: 2436859125894097919}
+  - component: {fileID: 3962933097048048136}
   m_Layer: 6
   m_Name: Ball 1
   m_TagString: Ball
@@ -202,13 +203,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   duplicateCount: 3
-  force: 2
+  force: 4
   isDragged: 0
+  isClickable: 1
   as_duplicate: {fileID: 8300000, guid: 62efe3f80ec52df4ab54a4e0ad659bf9, type: 3}
   as_click: {fileID: 8300000, guid: 441a70337c31521438e4c2ccbd4d1bd7, type: 3}
   duplicateParticules: {fileID: 3392309590886141319, guid: 8855b583bd62a944589b8f82a47818de, type: 3}
   clickParticules: {fileID: 3392309590886141319, guid: c814d5de6fb50104391808ce665735b5, type: 3}
-  isInhaled: 0
   currentState: 0
 --- !u!58 &8049560452109068285
 CircleCollider2D:
@@ -341,3 +342,17 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &3962933097048048136
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6226084741178426538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4dd00799cce2d4a4889b6309ec07fa51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isInhaled: 0
+  isFreeze: 0

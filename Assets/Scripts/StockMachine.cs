@@ -51,7 +51,7 @@ public class StockMachine : MonoBehaviour
 
     private IEnumerator InhaleObject(GameObject obj)
     {
-        Prop prop = obj.GetComponent<Prop>();
+        Data prop = obj.GetComponent<Data>();
         if (prop != null)
         {
             prop.isInhaled = true;
@@ -110,6 +110,7 @@ public class StockMachine : MonoBehaviour
 
             yield return null;
         }
+        prop.isFreeze = true;
         int randomIndex = Random.Range(0, 2);
         AudioClip as_inhale = (randomIndex == 0) ? as_inhale1 : as_inhale2;
         m_audioSource.PlayOneShot(as_inhale, 0.7f);

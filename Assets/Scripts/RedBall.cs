@@ -1,7 +1,9 @@
 using Shapes;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static BlueBall;
 
 public class RedBall : MonoBehaviour
 {
@@ -15,9 +17,11 @@ public class RedBall : MonoBehaviour
     private Rigidbody2D m_rb;
     private CircleCollider2D m_cc;
     private Vector3 dragOffset;
+    private Data m_data;
 
-    // Gestion du drag
+    [Header("Utils")]
     public bool isDragged = false;
+    public bool isClickable = true;
 
     [Header("Particules/SFX")]
     public AudioClip as_duplicate;
@@ -26,10 +30,6 @@ public class RedBall : MonoBehaviour
     public GameObject clickParticules;
     private AudioSource m_audioSource;
 
-    [Header("Utils")]
-    public bool isInhaled = false; // modifié par StockMachine.cs
-
-    // State machine
     public enum RedBallState { Spawn, Idle, Click, Duplicate, Drag, Inhale }
     public RedBallState currentState = RedBallState.Spawn;
 
@@ -39,10 +39,9 @@ public class RedBall : MonoBehaviour
         m_cc = GetComponent<CircleCollider2D>();
         m_audioSource = GetComponent<AudioSource>();
         m_rb = GetComponent<Rigidbody2D>();
+        m_data = GetComponent<Data>();
 
-        // Commencer en Spawn: immobile pendant 1 seconde
         currentState = RedBallState.Spawn;
-        m_rb.velocity = Vector2.zero;
         StartCoroutine(TransitionFromSpawn());
     }
 
@@ -57,45 +56,29 @@ public class RedBall : MonoBehaviour
         switch (currentState)
         {
             case RedBallState.Spawn:
-                m_rb.velocity = Vector2.zero;
+                ClickEvent();
+
+                m_rb.velocity *= 0.99f;
+
+                if (m_rb.velocity.magnitude < 0.01f)
+                    m_rb.velocity = Vector2.zero;
                 break;
 
             case RedBallState.Idle:
-                if (isInhaled)
+                if (m_data != null && m_data.isInhaled)
                 {
                     currentState = RedBallState.Inhale;
                     m_animator.SetTrigger("Inhale");
                     m_rb.velocity = Vector2.zero;
                     break;
                 }
-                if (Input.GetMouseButtonDown(0) && IsMouseOver() && !GameManager.Instance.isDragging)
-                {
-                    clickCount++;
-                    if (clickCount >= duplicateCount)
-                    {
-                        clickCount = 0;
-                        currentState = RedBallState.Duplicate;
-                        m_audioSource.PlayOneShot(as_duplicate);
-                        m_animator.SetTrigger("Duplicate");
-                        Instantiate(duplicateParticules, transform.position, Quaternion.identity);
-                    }
-                    else
-                    {
-                        currentState = RedBallState.Click;
-                        m_audioSource.PlayOneShot(as_click);
-                        m_animator.SetTrigger("Click");
-                        Instantiate(clickParticules, transform.position, Quaternion.identity);
-                    }
-                }
-                if (Input.GetMouseButtonDown(1) && IsMouseOver())
-                {
-                    Vector2 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                    dragOffset = transform.position - (Vector3)mouseWorldPos;
+                m_rb.velocity *= 0.99f;
+
+                if (m_rb.velocity.magnitude < 0.01f)
                     m_rb.velocity = Vector2.zero;
-                    GameManager.Instance.isDragging = true;
-                    currentState = RedBallState.Drag;
-                    isDragged = true;
-                }
+                
+                ClickEvent();
+
                 break;
 
             case RedBallState.Click:
@@ -113,7 +96,7 @@ public class RedBall : MonoBehaviour
                     transform.position = mouseWorldPos + (Vector2)dragOffset;
                     m_rb.velocity = Vector2.zero;
                 }
-                if (Input.GetMouseButtonUp(1) || isInhaled)
+                if (Input.GetMouseButtonUp(1) || (m_data != null && m_data.isInhaled))
                 {
                     currentState = RedBallState.Idle;
                     GameManager.Instance.isDragging = false;
@@ -126,8 +109,41 @@ public class RedBall : MonoBehaviour
                 break;
         }
     }
+    //Function for manage click and drag
+    private void ClickEvent()
+    {
+        if (!isClickable)
+            return;
 
-    // Méthode de vérification personnalisée pour déterminer si la souris est sur l'objet
+        if (Input.GetMouseButtonDown(0) && IsMouseOver() && !GameManager.Instance.isDragging)
+        {
+            clickCount++;
+            if (clickCount >= duplicateCount)
+            {
+                clickCount = 0;
+                currentState = RedBallState.Duplicate;
+                m_audioSource.PlayOneShot(as_duplicate);
+                m_animator.SetTrigger("Duplicate");
+                Instantiate(duplicateParticules, transform.position, Quaternion.identity);
+            }
+            else
+            {
+                currentState = RedBallState.Click;
+                m_audioSource.PlayOneShot(as_click);
+                m_animator.SetTrigger("Click");
+                Instantiate(clickParticules, transform.position, Quaternion.identity);
+            }
+        }
+        if (Input.GetMouseButtonDown(1) && IsMouseOver())
+        {
+            Vector2 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            dragOffset = transform.position - (Vector3)mouseWorldPos;
+            m_rb.velocity = Vector2.zero;
+            GameManager.Instance.isDragging = true;
+            currentState = RedBallState.Drag;
+            isDragged = true;
+        }
+    }
     private bool IsMouseOver()
     {
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
