@@ -224,7 +224,6 @@ MonoBehaviour:
   as_click: {fileID: 8300000, guid: 441a70337c31521438e4c2ccbd4d1bd7, type: 3}
   duplicateParticules: {fileID: 3392309590886141319, guid: 8855b583bd62a944589b8f82a47818de, type: 3}
   clickParticules: {fileID: 3392309590886141319, guid: c814d5de6fb50104391808ce665735b5, type: 3}
-  isInhaled: 0
   currentState: 0
   amplitude: 2
   oscillationSpeed: 2
